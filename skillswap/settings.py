@@ -22,9 +22,9 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 if WEBSITE_HOSTNAME:
     ALLOWED_HOSTS.append(WEBSITE_HOSTNAME)
 else:
-    ALLOWED_HOSTS.append('*')  # optional, safe for dev only
+    ALLOWED_HOSTS.append('*')  # dev only
 
-# Required for Django 4+ on Azure (CSRF origin)
+# CSRF (required on Azure)
 if WEBSITE_HOSTNAME:
     CSRF_TRUSTED_ORIGINS = [f"https://{WEBSITE_HOSTNAME}"]
 
@@ -48,7 +48,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -61,10 +61,28 @@ ROOT_URLCONF = 'skillswap.urls'
 WSGI_APPLICATION = 'skillswap.wsgi.application'
 
 # ---------------------------------------------------------
-# Database (SQLite – modified for Azure writable path)
+# Templates (project-level templates/ + app templates)
+# ---------------------------------------------------------
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [TEMPLATES_DIR],      # <project>/templates/
+        'APP_DIRS': True,             # <app>/templates/<app>/...
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+# ---------------------------------------------------------
+# Database (SQLite – Azure writable path)
 # ---------------------------------------------------------
 if WEBSITE_HOSTNAME:
-    # Running on Azure — use writable folder
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -72,7 +90,6 @@ if WEBSITE_HOSTNAME:
         }
     }
 else:
-    # Local dev environment
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
